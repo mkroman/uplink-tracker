@@ -2,25 +2,18 @@
 
 module Uplink
   class Tracker
-    class MissingParameter < StandardError; end
-
     RequiredParameters = %w{info_hash peer_id port uploaded downloaded left compact event}
-
-    def initialize
-      # …
-    end
-
+    
     def got_announce request
-      unless request.params.keys.has? *RqeuiredParameters
-        raise MissingParameter, RequiredParameters - request.params.keys
+      unless request.params.keys.has? *RequiredParameters
+        raise ArgumentError, RequiredParameters - request.params.keys
       end
-
-      if torrent = Torrent.with_info_hash(request[:info_hash])
-
-      else
-        respond { error "No such torrent on this tracker." }
+      
+      respond do
+        error "Sorry bro' :<"
       end
-    rescue MissingParameter => exception
+      
+    rescue ArgumentError => exception
       respond { error "#{exception.class.name}: #{exception.message}" }
     end
 
