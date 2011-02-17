@@ -1,10 +1,16 @@
 # encoding: utf-8
 
+require 'json'
+require 'joint'
 require 'bencode'
 require 'sinatra'
 require 'mongo_mapper'
+require 'permalink'
 
+require 'uplink/helpers'
 require 'uplink/application'
+
+Dir.glob(File.join(File.dirname(__FILE__), 'uplink/models', '*.rb')).each &method(:require)
 
 module Uplink
   class << Version = [0,1]
