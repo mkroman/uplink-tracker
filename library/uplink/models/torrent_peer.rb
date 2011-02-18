@@ -13,4 +13,12 @@ class TorrentPeer
   belongs_to :account
   
   timestamps!
+
+  def merge_with params
+    self.left       = params["left"].to_i
+    self.port       = params["port"].to_i
+    self.state      = params["event"]
+    self.uploaded   = params["uploaded"].to_i
+    self.downloaded = params["downloaded"].to_i
+  end
 end

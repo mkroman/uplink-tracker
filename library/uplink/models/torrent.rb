@@ -5,16 +5,14 @@ class Torrent
 
   key :name,        String
   key :size,        Bignum
+  key :infohash,    String
   key :description, String
 
-  key :genre_id,    ObjectId
-  key :account_id,  ObjectId
- 
   permalink :name
 
   # Relations
   belongs_to :account
-  belongs_to :genre
+  belongs_to :torrent_genre
 
   has_many :torrent_comments
   has_many :torrent_snatches
@@ -32,7 +30,7 @@ class Torrent
 
   def metadata_for account
     data = BEncode.load metadata.read
-    data["announce"] = "http://phi.uplink.io/#{account.passkey}"
+    data["announce"] = "http://phi.uplink.io:6969/#{account.passkey}/announce"
     data.bencode
   end
 
@@ -54,11 +52,14 @@ private
       end
 
       self.size = (self.torrent_files.map(&:size).inject(?+) / 1024)
+      self.infohash = Digest::SHA1.digest data["info"].bencode
 
       save
     end
   end
 
-  alias :imdb  :torrent_IMDB
-  alias :imdb= :torrent_IMDB=
+  alias :imdb   :torrent_IMDB
+  alias :imdb=  :torrent_IMDB=
+  alias :genre  :torrent_genre
+  alias :genre= :torrent_genre=
 end

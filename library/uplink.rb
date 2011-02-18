@@ -17,7 +17,7 @@ module Uplink
     def to_s; join '.' end
   end
 
-  DefaultHost = 'localhost'
+  DefaultHost = "localhost"
   DefaultPort = 6969
   
   def self.run

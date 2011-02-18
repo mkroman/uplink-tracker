@@ -1,4 +1,4 @@
-class Genre
+class TorrentGenre
   include MongoMapper::Document
 
   key :name, String
