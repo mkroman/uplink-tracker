@@ -39,7 +39,7 @@ class Torrent
   end
 
   def downloaders
-    torrent_peers.where state: :started
+    torrent_peers.where :state => "started", :left.gt => 0
   end
 
   def remove_ghost_peers!

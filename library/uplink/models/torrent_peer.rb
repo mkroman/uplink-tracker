@@ -20,7 +20,7 @@ class TorrentPeer
     self.state      = params["event"] || "started"
     self.peer_id    = params["peer_id"]
     self.address    = address
-    self.uploaded   = params["uploaded"].to_i
-    self.downloaded = params["downloaded"].to_i
+    self.uploaded   = params["uploaded"].to_i / 1024
+    self.downloaded = params["downloaded"].to_i / 1024
   end
 end

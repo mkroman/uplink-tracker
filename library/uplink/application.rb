@@ -15,6 +15,10 @@ module Uplink
       { "failure reason" => env['sinatra.error'].message }.bencode
     end
 
+    error do
+      { "failure reason" => "internal error" }.bencode
+    end
+
     configure do
       set :show_exceptions, false
 
@@ -23,7 +27,7 @@ module Uplink
     end
 
     get "/" do
-      { "failure reason" => "hejs" }.bencode
+      { "failure reason" => "invalid request" }.bencode
     end
 
     get "/:passkey/announce" do
@@ -47,35 +51,41 @@ module Uplink
     def announce torrent, account
       torrent.remove_ghost_peers!
 
-      peer = torrent.torrent_peers.first peer_id: params["peer_id"]
+      peer    = torrent.torrent_peers.first peer_id: params["peer_id"]
+      compact = params["compact"] == "1"
 
       unless peer
-        puts "unknown peer #{params["peer_id"]}"
-
         peer = TorrentPeer.new
+
         peer.torrent = torrent
         peer.account = account
+
         peer.merge_with params, env["REMOTE_ADDR"]
         peer.save
       else
+        peer.left        = params["left"].to_i
         peer.state       = params["event"] || "started"
         peer.uploaded   += params["uploaded"].to_i
         peer.downloaded += params["downloaded"].to_i
-        
-        peer.account.upload   += params["uploaded"].to_i / 1024
-        peer.account.download += params["downloaded"].to_i / 1024
 
-        peer.account.save
         peer.save
       end
+
+      peer.account.upload   += peer.uploaded
+      peer.account.download += peer.downloaded
+      peer.account.save
+
+      puts "Peer #{peer.peer_id.inspect}: #{peer.state}"
 
       case peer.state
       when "started"
         # …
       when "completed"
         snatch = TorrentSnatches.new
+
         snatch.torrent = torrent
         snatch.account = account
+
         snatch.save
       when "stopped"
         peer.destroy
@@ -83,30 +93,17 @@ module Uplink
         raise BitTorrentError, "Unknown event"
       end
 
-      compact = params["compact"] == "1"
-
-      peers = torrent.torrent_peers.all :limit => 30
-
-      peers.map! do |peer|
+      peers = torrent.torrent_peers.all(:limit => 30).map do |peer|
         { "peer id" => peer.id, "ip" => peer.address, "port" => peer.port }
       end
 
-      { "interval" => 60, "min interval" => 50, "peers" => compact ? compact!(peers) : peers, "complete" => torrent.uploaders.count, "incomplete" => torrent.downloaders.count }.bencode
-    end
-
-    def compact! peers
-      return "" unless peers.is_a? Array
-
-      result = ""
-
-      peers.map do |peer|
-        host = peer["ip"].split(?.).collect(&:to_i).pack 'C*'
-        port = [peer["port"]].pack 'n*'
-
-        result << [host, port].join
-      end
-
-      result
+      {
+        "peers"        => compact ? compact!(peers) : peers,
+        "interval"     => 60,
+        "complete"     => torrent.uploaders.count,
+        "incomplete"   => torrent.downloaders.count,
+        "min interval" => 50
+      }.bencode
     end
   end
 end

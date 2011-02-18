@@ -9,5 +9,15 @@ module Uplink
         raise BitTorrentError, "Missing parameters! (#{params.inspect})"
       end
     end
+
+    def compact! peers
+      peers.map do |peer|
+        host = peer["ip"].split(?.).collect(&:to_i).pack 'C*'
+        port = [peer["port"]].pack 'n*'
+
+        [host, port].join
+      end.join
+    end
+
   end
 end
