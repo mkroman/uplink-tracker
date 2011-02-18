@@ -35,14 +35,19 @@ class Torrent
   end
 
   def uploaders
-    torrent_peers.where state: :completed
+    torrent_peers.where left: 0
   end
 
   def downloaders
     torrent_peers.where state: :started
   end
 
+  def remove_ghost_peers!
+    torrent_peers.where(:updated_at.lt => Time.now - 120).all.each(&:delete)
+  end
+
 private
+
   def read_metadata
     if metadata and not torrent_files.any?
       data = BEncode.load metadata.read

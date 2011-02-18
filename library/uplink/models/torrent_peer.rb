@@ -14,10 +14,12 @@ class TorrentPeer
   
   timestamps!
 
-  def merge_with params
+  def merge_with params, address
     self.left       = params["left"].to_i
     self.port       = params["port"].to_i
-    self.state      = params["event"]
+    self.state      = params["event"] || "started"
+    self.peer_id    = params["peer_id"]
+    self.address    = address
     self.uploaded   = params["uploaded"].to_i
     self.downloaded = params["downloaded"].to_i
   end

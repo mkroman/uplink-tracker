@@ -2,6 +2,7 @@
 
 require 'json'
 require 'joint'
+require 'bcrypt'
 require 'bencode'
 require 'sinatra'
 require 'mongo_mapper'
