@@ -30,6 +30,12 @@ module Uplink
       { "failure reason" => "invalid request" }.bencode
     end
 
+    get "/stats.json" do
+      content_type "application/json"
+      
+      { peers: TorrentPeer.count, memory: memory_usage }.to_json
+    end
+
     get "/:passkey/announce" do
       require_params! :info_hash, :peer_id, :port, :uploaded, :downloaded, :left
 
@@ -51,7 +57,7 @@ module Uplink
     def announce torrent, account
       torrent.remove_ghost_peers!
 
-      peer    = torrent.torrent_peers.first peer_id: params["peer_id"]
+      peer    = torrent.peers.first peer_id: params["peer_id"]
       compact = params["compact"] == "1"
 
       unless peer
@@ -59,14 +65,16 @@ module Uplink
 
         peer.torrent = torrent
         peer.account = account
+        peer.merge_with params
 
-        peer.merge_with params, env["REMOTE_ADDR"]
+        peer.address = env["REMOTE_ADDR"]
+
         peer.save
       else
         peer.left        = params["left"].to_i
         peer.state       = params["event"] || "started"
-        peer.uploaded   += params["uploaded"].to_i
-        peer.downloaded += params["downloaded"].to_i
+        peer.uploaded   += params["uploaded"].to_i / 1024
+        peer.downloaded += params["downloaded"].to_i / 1024
 
         peer.save
       end
@@ -93,7 +101,7 @@ module Uplink
         raise BitTorrentError, "Unknown event"
       end
 
-      peers = torrent.torrent_peers.all(:limit => 30).map do |peer|
+      peers = torrent.peers.all(:limit => 30).map do |peer|
         { "peer id" => peer.id, "ip" => peer.address, "port" => peer.port }
       end
 

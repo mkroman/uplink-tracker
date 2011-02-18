@@ -11,7 +11,7 @@ require 'permalink'
 require 'uplink/helpers'
 require 'uplink/application'
 
-Dir.glob(File.join(File.dirname(__FILE__), 'uplink/models', '*.rb')).each &method(:require)
+Dir.glob(File.expand_path("~/Projects/Uplink/app/models/*.rb")).each &method(:require)
 
 module Uplink
   class << Version = [0,1]

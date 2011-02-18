@@ -19,5 +19,9 @@ module Uplink
       end.join
     end
 
+    def memory_usage
+       %x{ps -o rss= -p #{Process.pid}}.to_f / 1024.0
+    end
+
   end
 end
