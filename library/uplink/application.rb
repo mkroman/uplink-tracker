@@ -91,7 +91,7 @@ module Uplink
         { "peer id" => peer.id, "ip" => peer.address, "port" => peer.port }
       end
 
-      { "interval" => 60, "min interval" => 50, "peers" => compact ? compact!(peers) : peers }.bencode
+      { "interval" => 60, "min interval" => 50, "peers" => compact ? compact!(peers) : peers, "complete" => torrent.uploaders.count, "incomplete" => torrent.downloaders.count }.bencode
     end
 
     def compact! peers
