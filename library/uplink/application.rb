@@ -9,7 +9,7 @@ module Uplink
     MaximumPeerListSize     = 55
 
     DefaultAnnounceInterval = 60
-    MinimumAnnounceInteval  = 50
+    MinimumAnnounceInterval = 50
 
     error Uplink::BitTorrentError do
       { "failure reason" => env['sinatra.error'].message }.bencode
@@ -60,6 +60,7 @@ module Uplink
       compact = params["compact"] == "1"
 
       unless peer
+
         peer = TorrentPeer.new
 
         peer.torrent = torrent
@@ -69,6 +70,8 @@ module Uplink
         peer.merge_with params
 
         peer.save
+
+        puts "Peer #{peer.peer_id.inspect} relation established." ^ :bold
       else
         peer.left        = params["left"].to_i
         peer.state       = params["event"] || "started"
@@ -86,11 +89,11 @@ module Uplink
       when "started"
         # …
       when "completed"
-        TorrentSnatches.create account: account, torrent: torrent
+        puts "Peer #{peer.peer_id.inspect} finished leeching." ^ :bold
 
-        puts "Peer #{peer.inspect} finished leeching." ^ :bold
+        TorrentSnatches.create account: account, torrent: torrent
       when "stopped"
-        puts "Peer #{peer.inspect} stopped being active." ^ :bold
+        puts "Peer #{peer.peer_id.inspect} stopped being active." ^ :bold
 
         peer.destroy
       else
