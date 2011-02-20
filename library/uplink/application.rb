@@ -16,7 +16,11 @@ module Uplink
     end
 
     error do
-      { "failure reason" => "internal error" }.bencode
+      { "failure reason" => "Internal error" }.bencode
+    end
+
+    not_found do
+      { "failure reason" => "Invalid request" }.bencode
     end
 
     configure do
@@ -24,10 +28,6 @@ module Uplink
 
       MongoMapper.connection = Mongo::Connection.new "localhost"
       MongoMapper.database   = "uplink_development"
-    end
-
-    get "/" do
-      { "failure reason" => "invalid request" }.bencode
     end
 
     get "/stats.json" do
@@ -38,17 +38,16 @@ module Uplink
 
     get "/:passkey/announce" do
       require_params! :info_hash, :peer_id, :port, :uploaded, :downloaded, :left
-
       content_type "text/plain"
 
       if account = Account.find_by_passkey(params[:passkey])
         if torrent = Torrent.find_by_infohash(params["info_hash"])
           announce torrent, account
         else
-          raise BitTorrentError, "Torrent not recognized."
+          raise BitTorrentError, "The requested torrent was not recognized."
         end
       else
-        raise BitTorrentError, "Invalid passkey."
+        raise BitTorrentError, "The passkey was not recognized."
       end
     end
 
@@ -65,9 +64,9 @@ module Uplink
 
         peer.torrent = torrent
         peer.account = account
-        peer.merge_with params
-
         peer.address = env["REMOTE_ADDR"]
+
+        peer.merge_with params
 
         peer.save
       else
@@ -79,26 +78,23 @@ module Uplink
         peer.save
       end
 
-      peer.account.upload   += peer.uploaded
-      peer.account.download += peer.downloaded
+      peer.account.upload   += params["uploaded"].to_i / 1024
+      peer.account.download += params["downloaded"].to_i / 1024
       peer.account.save
-
-      puts "Peer #{peer.peer_id.inspect}: #{peer.state}"
 
       case peer.state
       when "started"
         # …
       when "completed"
-        snatch = TorrentSnatches.new
+        TorrentSnatches.create account: account, torrent: torrent
 
-        snatch.torrent = torrent
-        snatch.account = account
-
-        snatch.save
+        puts "Peer #{peer.inspect} finished leeching." ^ :bold
       when "stopped"
+        puts "Peer #{peer.inspect} stopped being active." ^ :bold
+
         peer.destroy
       else
-        raise BitTorrentError, "Unknown event"
+        raise BitTorrentError, "The event that was requested is not supported."
       end
 
       peers = torrent.peers.all(:limit => 30).map do |peer|
@@ -107,10 +103,10 @@ module Uplink
 
       {
         "peers"        => compact ? compact!(peers) : peers,
-        "interval"     => 60,
+        "interval"     => DefaultAnnounceInterval,
         "complete"     => torrent.uploaders.count,
         "incomplete"   => torrent.downloaders.count,
-        "min interval" => 50
+        "min interval" => MinimumAnnounceInterval
       }.bencode
     end
   end

@@ -2,6 +2,7 @@
 
 require 'json'
 require 'joint'
+require 'majic'
 require 'bcrypt'
 require 'bencode'
 require 'sinatra'
@@ -21,7 +22,7 @@ module Uplink
   DefaultHost = "localhost"
   DefaultPort = 6969
   
-  def self.run
-    Application.run! :host => DefaultHost, :port => DefaultPort
+  def self.run host = DefaultHost, port = DefaultPort
+    Application.run! :host => host, :port => port
   end
 end
