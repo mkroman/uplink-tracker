@@ -3,7 +3,7 @@
 module Uplink
   class BitTorrentError < StandardError; end
   class Application < Sinatra::Base
-    include Helpers
+    include Helpers, JSONAPI
 
     DefaultPeerListSize     = 30
     MaximumPeerListSize     = 55
@@ -28,12 +28,6 @@ module Uplink
 
       MongoMapper.connection = Mongo::Connection.new "localhost"
       MongoMapper.database   = "uplink_development"
-    end
-
-    get "/stats.json" do
-      content_type "application/json"
-      
-      { peers: TorrentPeer.count, memory: memory_usage }.to_json
     end
 
     get "/:passkey/announce" do
