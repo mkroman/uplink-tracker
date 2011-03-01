@@ -30,7 +30,6 @@ module MongoMapper
           end
         end
       end
-
     end
   end
 end
