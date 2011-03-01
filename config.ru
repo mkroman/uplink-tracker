@@ -4,4 +4,4 @@
 $:.unshift File.dirname(__FILE__) + '/library'
 require 'uplink'
 
-Uplink.run
+run Uplink::Application
