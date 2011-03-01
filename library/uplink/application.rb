@@ -54,7 +54,6 @@ module Uplink
       compact = params["compact"] == "1"
 
       unless peer
-
         peer = TorrentPeer.new
 
         peer.torrent = torrent
@@ -67,17 +66,13 @@ module Uplink
 
         puts "Peer #{peer.peer_id.inspect} relation established." ^ :bold
       else
-        peer.left        = params["left"].to_i
-        peer.state       = params["event"] || "started"
-        peer.uploaded   += params["uploaded"].to_i / 1024
-        peer.downloaded += params["downloaded"].to_i / 1024
+        peer.left       = params["left"].to_i
+        peer.state      = params["event"] || "leeching"
+        peer.uploaded   = params["uploaded"].to_i / 1024
+        peer.downloaded = params["downloaded"].to_i / 1024
 
         peer.save
       end
-
-      peer.account.upload   += params["uploaded"].to_i / 1024
-      peer.account.download += params["downloaded"].to_i / 1024
-      peer.account.save
 
       case peer.state
       when "started"
@@ -90,6 +85,15 @@ module Uplink
         puts "Peer #{peer.peer_id.inspect} stopped being active." ^ :bold
 
         peer.destroy
+      when "leeching"
+        account = peer.account
+
+        uploaded = (params["uploaded"].to_i / 1024) - peer.uploaded
+        downloaded = (params["downloaded"].to_i / 1024) - peer.downloaded
+
+        account.upload   += uploaded
+        account.download += downloaded
+        account.save
       else
         raise BitTorrentError, "The event that was requested is not supported."
       end
