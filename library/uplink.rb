@@ -26,4 +26,4 @@ require 'uplink/helpers'
 require 'uplink/json-api'
 require 'uplink/application'
 
-Dir.glob(File.expand_path("~/Projects/Uplink/app/models/*.rb")).each &method(:require)
+Dir.glob(File.expand_path("/var/www/uplink.io/app/models/*.rb")).each &method(:require)
