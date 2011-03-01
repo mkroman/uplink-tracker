@@ -27,7 +27,7 @@ module Uplink
       set :show_exceptions, false
 
       MongoMapper.connection = Mongo::Connection.new "localhost"
-      MongoMapper.database   = "uplink_development"
+      MongoMapper.database   = "uplink_production"
     end
 
     get "/:passkey/announce" do
